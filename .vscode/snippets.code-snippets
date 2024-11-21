@@ -1,0 +1,96 @@
+{
+  // Place your global snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and
+  // description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope
+  // is left empty or omitted, the snippet gets applied to all languages. The prefix is what is
+  // used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+  // $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders.
+  // Placeholders with the same ids are connected.
+
+  /* ======== MISC ======== */
+
+  "comment separator for readability": {
+    "prefix": "header comment",
+    "body": ["/* ======== ${1:COMMENT} ======== */", "$0"],
+    "description": "print a comment block, which can be used to separate code into sections for readability",
+  },
+
+  /* ======== CONTRACTS ======== */
+
+  "license, pragma, contract": {
+    "scope": "solidity",
+    "prefix": "contract",
+    "body": [
+      "// SPDX-License-Identifier: MIT",
+      "pragma solidity ^0.8.20;",
+      "",
+      "contract $1 {",
+      "\tconstructor() {",
+      "\t",
+      "\t}",
+      "\t$0",
+      "}",
+    ],
+    "description": "print contract with license, pragma and empty constructor",
+  },
+
+  "setup with import TestUtils": {
+    "prefix": "test setup contract",
+    "body": [
+      "// SPDX-License-Identifier: UNLICENSED",
+      "pragma solidity ^0.8.20;",
+      "",
+      "import {TestUtils} from \"../TestUtils.sol\";",
+      "",
+      "contract ${1:ContractName}TestSetup is TestUtils {",
+      "",
+      "    function _setUp() internal override {",
+      "        $0",
+      "    }",
+      "",
+      "}",
+      "",
+    ],
+    "description": "print a setup for test contract (should use in _ContractName.Setup.sol file)",
+  },
+
+  "simple test with forge-std/Test.sol": {
+    "prefix": "test simple contract",
+    "body": [
+      "// SPDX-License-Identifier: MIT",
+      "pragma solidity ^0.8.20;",
+      "",
+      "import \"forge-std/Test.sol\";",
+      "import {console} from \"forge-std/console.sol\";",
+      "",
+      "contract ${1:ContractName} is Test {",
+      "    function setUp() public {}",
+      "",
+      "    function test_${2:testName}() public {",
+      "        $0",
+      "    }",
+      "}",
+      "",
+    ],
+    "description": "print a simple test contract with forge-std/Test.sol",
+  },
+
+  "simple script with forge-std/Script.sol": {
+    "prefix": "script simple contract",
+    "body": [
+      "// SPDX-License-Identifier: MIT",
+      "pragma solidity ^0.8.20;",
+      "",
+      "import {Script, console} from \"forge-std/Script.sol\";",
+      "",
+      "contract ${1:ContractName} is Script {",
+      "    function setUp() public {}",
+      "",
+      "    function run() public {",
+      "        $0",
+      "    }",
+      "}",
+      "",
+    ],
+    "description": "print a script contract with forge-std/Script.sol",
+  },
+}
