@@ -43,9 +43,10 @@ contract TokenWithVesting is ERC20, Ownable {
     error WrongCliffDate(string message);
     error VestingNotRevokable(string message);
     error RevokeTransferFromReverted();
-    error NotEnoughUnlockedTokens();
+    error NotEnoughUnlockedTokens(address sender, uint availableBalance);
 
     /* ======== EVENTS ======== */
+    event TokenSended(address from, address to, uint tokenAmmount);
 
     event NewVesting(
         address indexed receiver,
@@ -70,7 +71,56 @@ contract TokenWithVesting is ERC20, Ownable {
 
     /* ======== EXTERNAL/PUBLIC ======== */
 
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) public override returns (bool) {
+        uint256 transferableBalance = _transferableBalance(
+            msg.sender,
+            block.timestamp
+        );
+        require(
+            transferableBalance >= amount,
+            NotEnoughUnlockedTokens(msg.sender, transferableBalance)
+        );
+        emit TokenSended(msg.sender, recipient, amount);
+        return super.transfer(recipient, amount);
+    }
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public override returns (bool) {
+        require(
+            _transferableBalance(sender, block.timestamp) >= amount,
+            NotEnoughUnlockedTokens(sender, balanceOf(sender))
+        );
+        emit TokenSended(sender, recipient, amount);
+        return super.transferFrom(sender, recipient, amount);
+    }
+
     /* ======== INTERNAL ======== */
+
+    function _calculateNonVestedTokens(
+        uint256 tokens,
+        uint256 time,
+        uint256 start,
+        uint256 cliff,
+        uint256 vested
+    ) private pure returns (uint256) {
+        // Shortcuts for before cliff and after vested cases.
+        if (time >= vested) {
+            return 0;
+        }
+        if (time < cliff) {
+            return tokens;
+        }
+
+        uint256 vestedTokens = (tokens * (time - start)) / (vested - start);
+
+        return tokens - vestedTokens;
+    }
 
     /* ======== ADMIN ======== */
 
@@ -97,7 +147,7 @@ contract TokenWithVesting is ERC20, Ownable {
     ) external onlyOwner returns (uint256) {
         require(
             _receiver != address(this),
-            VestingToTM("Vesting to Token Manager")
+            VestingToTM("Vesting to Token Contract")
         );
         require(
             vestingsLengths[_receiver] < MAX_VESTINGS_PER_ADDRESS,
@@ -116,6 +166,8 @@ contract TokenWithVesting is ERC20, Ownable {
             _vested,
             _revokable
         );
+
+        this.transfer(_receiver, _amount);
 
         emit NewVesting(_receiver, vestingId, _amount);
 
@@ -143,12 +195,10 @@ contract TokenWithVesting is ERC20, Ownable {
             v.vesting
         );
 
+        burn(_holder, nonVested);
         delete vestings[_holder][_vestingId];
-
-        require(
-            transferFrom(_holder, address(this), nonVested),
-            RevokeTransferFromReverted()
-        );
+        vestingsLengths[_holder]--;
+        mint(address(this), nonVested);
 
         emit RevokeVesting(_holder, _vestingId, nonVested);
     }
@@ -158,35 +208,11 @@ contract TokenWithVesting is ERC20, Ownable {
      * @param _holder Holder of tokens being burned
      * @param _amount Number of tokens being burned
      */
-    function burn(address _holder, uint256 _amount) external onlyOwner {
-        require(
-            _transferableBalance(_holder, block.timestamp) >= _amount,
-            NotEnoughUnlockedTokens()
-        );
+    function burn(address _holder, uint256 _amount) internal onlyOwner {
         _burn(_holder, _amount);
     }
 
     /* ======== VIEW ======== */
-
-    function _calculateNonVestedTokens(
-        uint256 tokens,
-        uint256 time,
-        uint256 start,
-        uint256 cliff,
-        uint256 vested
-    ) private pure returns (uint256) {
-        // Shortcuts for before cliff and after vested cases.
-        if (time >= vested) {
-            return 0;
-        }
-        if (time < cliff) {
-            return tokens;
-        }
-
-        uint256 vestedTokens = (tokens * (time - start)) / (vested - start);
-
-        return tokens - vestedTokens;
-    }
 
     function _transferableBalance(
         address _holder,
@@ -211,37 +237,5 @@ contract TokenWithVesting is ERC20, Ownable {
         }
 
         return transferable;
-    }
-
-    // function onTransfer(
-    //     address _from,
-    //     uint256 _amount
-    // ) external view returns (bool) {
-    //     return _transferableBalance(_from, block.timestamp) >= _amount;
-    // }
-
-    /* ======== OVERRIDDEN METHODS ======== */
-
-    function transfer(
-        address recipient,
-        uint256 amount
-    ) public override returns (bool) {
-        require(
-            _transferableBalance(msg.sender, block.timestamp) >= amount,
-            NotEnoughUnlockedTokens()
-        );
-        return super.transfer(recipient, amount);
-    }
-
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) public override returns (bool) {
-        require(
-            _transferableBalance(sender, block.timestamp) >= amount,
-            NotEnoughUnlockedTokens()
-        );
-        return super.transferFrom(sender, recipient, amount);
     }
 }
