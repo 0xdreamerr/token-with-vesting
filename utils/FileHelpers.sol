@@ -132,7 +132,7 @@ contract FileReadUtils is FileUtilsState {
         string memory chainObjKey,
         string memory json,
         uint32 chainId
-    ) internal {
+    ) internal view {
         bool isChainExist = vm.keyExistsJson(json, chainObjKey);
 
         require(
@@ -146,7 +146,7 @@ contract FileReadUtils is FileUtilsState {
         string memory contractName,
         string memory json,
         uint32 chainId
-    ) internal {
+    ) internal view {
         bool isContractExist = vm.keyExistsJson(
             json,
             string.concat(chainObjKey, ".", contractName)
