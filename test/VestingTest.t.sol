@@ -84,9 +84,10 @@ contract VestingTest is Test {
         );
     }
 
-    function test_transferBeforeCliff() public {
+    function testFuzz_transferBeforeCliff(uint8 amount) public {
+        vm.assume(amount > 0);
+
         address receiver = address(userB);
-        uint amount = 5000;
         uint64 start = 10;
         uint64 cliff = 20;
         uint64 vested = 40;
