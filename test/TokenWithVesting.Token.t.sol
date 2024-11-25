@@ -70,4 +70,29 @@ contract TokenTest is Test, TokenWithVestingSetup {
 
         assert(finalBalance == initialBalance + amount);
     }
+
+    function testFuzz_zeroAddress(uint8 amount) public {
+        vm.startPrank(owner);
+        tokenWithVesting.assignVested(
+            _receiver,
+            _amount,
+            _start,
+            _cliff,
+            _vested,
+            _revokable
+        );
+
+        vm.warp(21);
+
+        vm.startPrank(userB);
+        vm.expectRevert(TokenWithVesting.WrongAddress.selector);
+        tokenWithVesting.transfer(address(0), amount);
+    }
+
+    function testFuzz_mintOnZeroAddress(uint8 amount) public {
+        vm.startPrank(owner);
+
+        vm.expectRevert(TokenWithVesting.WrongAddress.selector);
+        tokenWithVesting.mint(address(0), amount);
+    }
 }

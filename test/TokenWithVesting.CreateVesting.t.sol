@@ -93,4 +93,19 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
             _revokable
         );
     }
+
+    function test_zeroAddress() public {
+        vm.startPrank(owner);
+        _receiver = address(0);
+
+        vm.expectRevert(TokenWithVesting.WrongAddress.selector);
+        tokenWithVesting.assignVested(
+            _receiver,
+            _amount,
+            _start,
+            _cliff,
+            _vested,
+            _revokable
+        );
+    }
 }

@@ -41,6 +41,7 @@ contract TokenWithVesting is ERC20, Ownable {
     error VestingNotRevokable();
     error RevokeTransferFromReverted();
     error NotEnoughUnlockedTokens(address sender, uint availableBalance);
+    error WrongAddress();
 
     /* ======== EVENTS ======== */
     event TokenSended(address from, address to, uint tokenAmmount);
@@ -72,6 +73,7 @@ contract TokenWithVesting is ERC20, Ownable {
         address recipient,
         uint256 amount
     ) public override returns (bool) {
+        require(recipient != address(0), WrongAddress());
         uint256 transferableBalance = _transferableBalance(
             msg.sender,
             block.timestamp
@@ -89,6 +91,7 @@ contract TokenWithVesting is ERC20, Ownable {
         address recipient,
         uint256 amount
     ) public override returns (bool) {
+        require(sender != address(0), WrongAddress());
         require(
             _transferableBalance(sender, block.timestamp) >= amount,
             NotEnoughUnlockedTokens(sender, balanceOf(sender))
@@ -122,6 +125,7 @@ contract TokenWithVesting is ERC20, Ownable {
     /* ======== ADMIN ======== */
 
     function mint(address _receiver, uint256 _amount) public onlyOwner {
+        require(_receiver != address(0), WrongAddress());
         _mint(_receiver, _amount);
     }
 
@@ -148,6 +152,7 @@ contract TokenWithVesting is ERC20, Ownable {
             TooManyVestings()
         );
         require(_start <= _cliff && _cliff <= _vested, WrongCliffDate());
+        require(_receiver != address(0), WrongAddress());
 
         uint256 vestingId = vestingsLengths[_receiver]++;
         vestings[_receiver][vestingId] = TokenVesting(
