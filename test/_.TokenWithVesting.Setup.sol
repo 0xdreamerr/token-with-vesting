@@ -14,10 +14,10 @@ contract TokenWithVestingSetup is Test {
     string symbol;
     uint256 totalSupply;
 
-    // base options for all vestings
+    // base options for all test vestings
     uint64 public _amount = 1000;
     uint64 public _start = 10;
-    uint64 public _cliff = 10;
+    uint64 public _cliff = 11;
     uint64 public _vested = 20;
     bool public _revokable = true;
     address public _receiver;
