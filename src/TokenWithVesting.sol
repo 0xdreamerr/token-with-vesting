@@ -28,20 +28,17 @@ contract TokenWithVesting is ERC20, Ownable {
     mapping(address => uint256) public vestingsLengths;
 
     modifier vestingExists(address _holder, uint256 _vestingId) {
-        require(
-            _vestingId < vestingsLengths[_holder],
-            NoVesting("Vesting not exist")
-        );
+        require(_vestingId < vestingsLengths[_holder], NoVesting());
         _;
     }
 
     /* ======== ERRORS ======== */
 
-    error NoVesting(string message);
-    error VestingToTM(string message);
-    error TooManyVestings(string message);
-    error WrongCliffDate(string message);
-    error VestingNotRevokable(string message);
+    error NoVesting();
+    error VestingToTM();
+    error TooManyVestings();
+    error WrongCliffDate();
+    error VestingNotRevokable();
     error RevokeTransferFromReverted();
     error NotEnoughUnlockedTokens(address sender, uint availableBalance);
 
@@ -145,18 +142,12 @@ contract TokenWithVesting is ERC20, Ownable {
         uint64 _vested,
         bool _revokable
     ) external onlyOwner returns (uint256) {
-        require(
-            _receiver != address(this),
-            VestingToTM("Vesting to Token Contract")
-        );
+        require(_receiver != address(this), VestingToTM());
         require(
             vestingsLengths[_receiver] < MAX_VESTINGS_PER_ADDRESS,
-            TooManyVestings("Too many vestings")
+            TooManyVestings()
         );
-        require(
-            _start <= _cliff && _cliff <= _vested,
-            WrongCliffDate("Wrong cliff date")
-        );
+        require(_start <= _cliff && _cliff <= _vested, WrongCliffDate());
 
         uint256 vestingId = vestingsLengths[_receiver]++;
         vestings[_receiver][vestingId] = TokenVesting(
@@ -185,7 +176,7 @@ contract TokenWithVesting is ERC20, Ownable {
         uint256 _vestingId
     ) external vestingExists(_holder, _vestingId) onlyOwner {
         TokenVesting storage v = vestings[_holder][_vestingId];
-        require(v.revokable, VestingNotRevokable("Vesting not revokable"));
+        require(v.revokable, VestingNotRevokable());
 
         uint256 nonVested = _calculateNonVestedTokens(
             v.amount,
