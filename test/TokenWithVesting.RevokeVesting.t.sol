@@ -12,6 +12,7 @@ contract RevokeVestingTest is Test, TokenWithVestingSetup {
 
     function test_revokeVesting() public {
         vm.startPrank(owner);
+
         tokenWithVesting.assignVested(
             _receiver,
             _amount,
@@ -37,13 +38,13 @@ contract RevokeVestingTest is Test, TokenWithVestingSetup {
         );
     }
 
-    function test_vestingNotExist() public {
+    function test_RevertIf_VestingNotExist() public {
         // expecting custom error
         vm.expectRevert(TokenWithVesting.NoVesting.selector);
         tokenWithVesting.revokeVesting(userB, 0);
     }
 
-    function test_notRevokable() public {
+    function test_RevertIf_VestingNotRevokable() public {
         _revokable = false;
 
         vm.startPrank(owner);

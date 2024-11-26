@@ -22,13 +22,13 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
             _revokable
         );
 
-        vm.warp(25);
+        vm.sleep(25);
 
-        assertEq(amount, tokenWithVesting.balanceOf(userB));
-        assertEq(1, tokenWithVesting.vestingsLengths(userB));
+        assertEq(tokenWithVesting.balanceOf(userB), amount);
+        assertEq(tokenWithVesting.vestingsLengths(userB), 1);
     }
 
-    function testFuzz_createVestingOnTokenContract(uint8 amount) public {
+    function test_RevertIf_ReceiverIsTokenContract() public {
         vm.startPrank(owner);
         _receiver = address(tokenWithVesting);
 
@@ -36,7 +36,7 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
         vm.expectRevert(TokenWithVesting.VestingToTM.selector);
         tokenWithVesting.assignVested(
             _receiver,
-            amount,
+            _amount,
             _start,
             _cliff,
             _vested,
@@ -44,7 +44,7 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
         );
     }
 
-    function test_maxVesting() public {
+    function test_RevertIf_TooManyVestings() public {
         vm.startPrank(owner);
 
         // creating 5 vestings and 1 more for error (MAX_VESTINGS = 5)
@@ -68,10 +68,11 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
         }
     }
 
-    function test_cliffDate() public {
+    function test_RevertIf_CliffIsGreaterThanVested() public {
         vm.startPrank(owner);
 
         _cliff = 25; // _cliff > _vested, expecting error
+
         vm.expectRevert(TokenWithVesting.WrongCliffDate.selector);
         tokenWithVesting.assignVested(
             _receiver,
@@ -81,8 +82,12 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
             _vested,
             _revokable
         );
+    }
+    function test_RevertIf_CliffIsGreaterThanStart() public {
+        vm.startPrank(owner);
 
         _cliff = 9; // _cliff < _start, expecting error
+
         vm.expectRevert(TokenWithVesting.WrongCliffDate.selector);
         tokenWithVesting.assignVested(
             _receiver,
@@ -94,8 +99,9 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
         );
     }
 
-    function test_zeroAddress() public {
+    function test_RevertIf_ReceiverIsZeroAddress() public {
         vm.startPrank(owner);
+
         _receiver = address(0);
 
         vm.expectRevert(TokenWithVesting.WrongAddress.selector);

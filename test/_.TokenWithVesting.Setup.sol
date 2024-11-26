@@ -25,6 +25,7 @@ contract TokenWithVestingSetup is Test {
     function setUp() public virtual {
         owner = address(0x1);
         userB = address(0x2);
+
         name = "DREAMERR";
         symbol = "DRMR";
         totalSupply = 100000;

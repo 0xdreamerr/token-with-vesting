@@ -10,7 +10,7 @@ contract TokenTest is Test, TokenWithVestingSetup {
         _receiver = userB;
     }
 
-    function testFuzz_transferBeforeCliff(uint8 amount) public {
+    function testFuzz_RevertIf_TransferBeforeCliff(uint8 amount) public {
         vm.assume(amount > 0);
 
         vm.startPrank(owner);
@@ -38,11 +38,11 @@ contract TokenTest is Test, TokenWithVestingSetup {
         tokenWithVesting.transfer(owner, amount);
     }
 
-    function testFuzz_transferAfterCliff(uint8 amount) public {
+    function testFuzz_transferAfterVested(uint8 amount) public {
         vm.startPrank(owner);
         tokenWithVesting.assignVested(
             _receiver,
-            _amount,
+            amount,
             _start,
             _cliff,
             _vested,
@@ -71,7 +71,7 @@ contract TokenTest is Test, TokenWithVestingSetup {
         assert(finalBalance == initialBalance + amount);
     }
 
-    function testFuzz_zeroAddress(uint8 amount) public {
+    function test_RevertIf_ReceiverIsZeroAddress() public {
         vm.startPrank(owner);
         tokenWithVesting.assignVested(
             _receiver,
@@ -86,13 +86,106 @@ contract TokenTest is Test, TokenWithVestingSetup {
 
         vm.startPrank(userB);
         vm.expectRevert(TokenWithVesting.WrongAddress.selector);
-        tokenWithVesting.transfer(address(0), amount);
+        tokenWithVesting.transfer(address(0), _amount);
     }
 
-    function testFuzz_mintOnZeroAddress(uint8 amount) public {
+    function test_RevertIf_MintOnZeroAddress() public {
         vm.startPrank(owner);
 
         vm.expectRevert(TokenWithVesting.WrongAddress.selector);
-        tokenWithVesting.mint(address(0), amount);
+        tokenWithVesting.mint(address(0), _amount);
     }
+
+    function test_transferBetweenCliffAndVested() public {
+        vm.startPrank(owner);
+
+        tokenWithVesting.assignVested(
+            _receiver,
+            _amount,
+            _start,
+            _cliff,
+            _vested,
+            _revokable
+        );
+
+        vm.warp(15);
+
+        // Unlocked Tokens should be 500 (_start = 10, _vested = 20)
+        vm.startPrank(userB);
+        vm.expectRevert(
+            abi.encodeWithSignature(
+                "NotEnoughUnlockedTokens(address,uint256)",
+                userB,
+                _amount / 2
+            )
+        );
+        tokenWithVesting.transfer(owner, _amount);
+    }
+
+    function test_transferWhenCliff() public {
+        vm.startPrank(owner);
+
+        tokenWithVesting.assignVested(
+            _receiver,
+            _amount,
+            _start,
+            _cliff,
+            _vested,
+            _revokable
+        );
+
+        vm.warp(11);
+
+        // Unlocked Tokens should be 100 (_start = 10, _cliff = 11, _vested = 20)
+        vm.startPrank(userB);
+        vm.expectRevert(
+            abi.encodeWithSignature(
+                "NotEnoughUnlockedTokens(address,uint256)",
+                userB,
+                _amount / 10
+            )
+        );
+        tokenWithVesting.transfer(owner, _amount);
+    }
+
+    function testFuzz_transferWhenVested(uint8 amount) public {
+        vm.startPrank(owner);
+
+        tokenWithVesting.assignVested(
+            _receiver,
+            _amount,
+            _start,
+            _cliff,
+            _vested,
+            _revokable
+        );
+
+        vm.warp(20);
+
+        // Unlocked Tokens should be 1000 (_vested = 20)
+        vm.startPrank(userB);
+        uint initialBalance = tokenWithVesting.balanceOf(userB);
+        tokenWithVesting.transfer(owner, amount);
+        uint finalBalance = tokenWithVesting.balanceOf(userB);
+
+        assertEq(initialBalance, finalBalance + amount);
+        assertEq(tokenWithVesting.balanceOf(owner), amount);
+    }
+
+    /*  transferableTokens
+     *   |                         _/--------   vestedTokens
+     *   |                       _/
+     *   |                     _/
+     *   |                   _/
+     *   |                 _/
+     *   |                /
+     *   |              .|
+     *   |            .  |
+     *   |          .    |
+     *   |        .      |
+     *   |      .        |
+     *   |    .          |
+     *   +===+===========+---------+----------> time
+     *      Start       Cliff    Vested
+     */
 }
