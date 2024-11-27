@@ -23,7 +23,7 @@ contract TokenTest is Test, TokenWithVestingSetup {
             _revokable
         );
 
-        vm.warp(10);
+        skip(9);
 
         // trying to transfer tokens before _cliff
         vm.startPrank(userB);
@@ -49,7 +49,7 @@ contract TokenTest is Test, TokenWithVestingSetup {
             _revokable
         );
 
-        vm.warp(21);
+        skip(20);
 
         vm.startPrank(userB);
         uint initialBalance = tokenWithVesting.balanceOf(userB);
@@ -82,7 +82,7 @@ contract TokenTest is Test, TokenWithVestingSetup {
             _revokable
         );
 
-        vm.warp(21);
+        skip(20);
 
         vm.startPrank(userB);
         vm.expectRevert(TokenWithVesting.WrongAddress.selector);
@@ -108,7 +108,7 @@ contract TokenTest is Test, TokenWithVestingSetup {
             _revokable
         );
 
-        vm.warp(15);
+        skip(14);
 
         // Unlocked Tokens should be 500 (_start = 10, _vested = 20)
         vm.startPrank(userB);
@@ -134,7 +134,7 @@ contract TokenTest is Test, TokenWithVestingSetup {
             _revokable
         );
 
-        vm.warp(11);
+        skip(10);
 
         // Unlocked Tokens should be 100 (_start = 10, _cliff = 11, _vested = 20)
         vm.startPrank(userB);
@@ -153,14 +153,14 @@ contract TokenTest is Test, TokenWithVestingSetup {
 
         tokenWithVesting.assignVested(
             _receiver,
-            _amount,
+            amount,
             _start,
             _cliff,
             _vested,
             _revokable
         );
 
-        vm.warp(20);
+        skip(19);
 
         // Unlocked Tokens should be 1000 (_vested = 20)
         vm.startPrank(userB);
@@ -172,19 +172,19 @@ contract TokenTest is Test, TokenWithVestingSetup {
         assertEq(tokenWithVesting.balanceOf(owner), amount);
     }
 
-    /*  transferableTokens
-     *   |                         _/--------   vestedTokens
-     *   |                       _/
-     *   |                     _/
-     *   |                   _/
-     *   |                 _/
-     *   |                /
-     *   |              .|
-     *   |            .  |
-     *   |          .    |
-     *   |        .      |
-     *   |      .        |
-     *   |    .          |
+    /*  transferableTokens           _x
+     *   |                         x/--------   vestedTokens
+     *   |                       _/|
+     *   |                     _/  |
+     *   |                   x/    |            x - test cases
+     *   |                 _/      |
+     *   |               x/        |
+     *   |              .|         |
+     *   |            .  |         |
+     *   |          x    |         |
+     *   |        .      |         |
+     *   |      .        |         |
+     *   |    .          |         |
      *   +===+===========+---------+----------> time
      *      Start       Cliff    Vested
      */

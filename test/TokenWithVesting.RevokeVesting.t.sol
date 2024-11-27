@@ -23,7 +23,7 @@ contract RevokeVestingTest is Test, TokenWithVestingSetup {
         );
 
         uint initialVestingCount = tokenWithVesting.vestingsLengths(userB);
-        vm.warp(15);
+        skip(14);
 
         tokenWithVesting.revokeVesting(userB, 0);
 

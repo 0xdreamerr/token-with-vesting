@@ -22,7 +22,7 @@ contract CreateVestingTest is Test, TokenWithVestingSetup {
             _revokable
         );
 
-        vm.sleep(25);
+        skip(24);
 
         assertEq(tokenWithVesting.balanceOf(userB), amount);
         assertEq(tokenWithVesting.vestingsLengths(userB), 1);
